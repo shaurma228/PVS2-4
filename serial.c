@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <omp.h>
 
 void performOperations(double **a, double **b, double **result_add, double **result_sub, double **result_mul, double **result_div, const int SIZE) {
     for (int i = 0; i < SIZE; i++) {
@@ -36,6 +37,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    double start = omp_get_wtime();
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
             a[i][j] = i + j + 1;
@@ -44,8 +46,9 @@ int main(int argc, char *argv[]) {
     }
 
     performOperations(a, b, result_add, result_sub, result_mul, result_div, SIZE);
+    double end = omp_get_wtime();
 
-    printf("Operations completed.\n");
+    printf("Operations completed. Time taken: %f seconds\n", end - start);
 
     for (int i = 0; i < SIZE; i++) {
         free(a[i]);

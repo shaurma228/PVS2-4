@@ -39,6 +39,8 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    omp_set_num_threads(THREADS);
+    double start = omp_get_wtime();
     #pragma omp parallel for collapse(2) num_threads(THREADS)
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
@@ -48,8 +50,9 @@ int main(int argc, char *argv[]) {
     }
 
     performOperations(a, b, result_add, result_sub, result_mul, result_div, SIZE, THREADS);
+    double end = omp_get_wtime();
 
-    printf("Operations completed.\n");
+    printf("Operations completed. Time taken: %f seconds\n", end - start);
 
     for (int i = 0; i < SIZE; i++) {
         free(a[i]);

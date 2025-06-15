@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <omp.h>
 
-void performOperations(double **a, double **b, double **result_add, double **result_sub, double **result_mul, double **result_div, const int SIZE) {
+void performOperations(double **a, double **b, double **result_add, double **result_sub, double **result_mul, double **result_div, const int SIZE, const int THREADS) {
+    #pragma omp parallel for collapse(2) num_threads(THREADS)
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
             result_add[i][j] = a[i][j] + b[i][j];
@@ -14,6 +16,7 @@ void performOperations(double **a, double **b, double **result_add, double **res
 
 int main(int argc, char *argv[]) {
     const int SIZE = atoi(argv[1]);
+    const int THREADS = atoi(argv[2]);
 
     double **a = malloc(SIZE * sizeof(double *));
     double **b = malloc(SIZE * sizeof(double *));
@@ -36,6 +39,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    #pragma omp parallel for collapse(2) num_threads(THREADS)
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
             a[i][j] = i + j + 1;
@@ -43,7 +47,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    performOperations(a, b, result_add, result_sub, result_mul, result_div, SIZE);
+    performOperations(a, b, result_add, result_sub, result_mul, result_div, SIZE, THREADS);
 
     printf("Operations completed.\n");
 

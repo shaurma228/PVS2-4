@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <omp.h>
 
+double start;
+double end;
+
 void performOperations(double **a, double **b, double **result_add, double **result_sub, double **result_mul, double **result_div, const int SIZE) {
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
@@ -15,6 +18,9 @@ void performOperations(double **a, double **b, double **result_add, double **res
 
 int main(int argc, char *argv[]) {
     const int SIZE = atoi(argv[1]);
+    const int LOOPS = atoi(argv[2]);
+
+    double totalTime = 0.0;
 
     double **a = malloc(SIZE * sizeof(double *));
     double **b = malloc(SIZE * sizeof(double *));
@@ -37,18 +43,22 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    double start = omp_get_wtime();
-    for (int i = 0; i < SIZE; i++) {
-        for (int j = 0; j < SIZE; j++) {
-            a[i][j] = i + j + 1;
-            b[i][j] = i + j + 2;
+    for (int k = 0; k < LOOPS; ++k) {
+        start = omp_get_wtime();
+        for (int i = 0; i < SIZE; ++i) {
+            for (int j = 0; j < SIZE; ++j) {
+                a[i][j] = i + j + 1;
+                b[i][j] = i + j + 2;
+            }
         }
+
+        performOperations(a, b, result_add, result_sub, result_mul, result_div, SIZE);
+        end = omp_get_wtime();
+
+        totalTime += end - start;
     }
 
-    performOperations(a, b, result_add, result_sub, result_mul, result_div, SIZE);
-    double end = omp_get_wtime();
-
-    printf("Operations completed. Time taken: %f seconds\n", end - start);
+    printf("Time taken: %f seconds\n", totalTime / (LOOPS* 1.0));
 
     for (int i = 0; i < SIZE; i++) {
         free(a[i]);

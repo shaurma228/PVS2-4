@@ -2,16 +2,36 @@
 #include <stdlib.h>
 #include <omp.h>
 
-double start;
-double end;
+double startAdd, endAdd, startSub, endSub, startMul, endMul, startDiv, endDiv;
 
-void performOperations(double **a, double **b, double **result_add, double **result_sub, double **result_mul, double **result_div, const int SIZE) {
+void addOperation(double **a, double **b, double **result, const int SIZE) {
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
-            result_add[i][j] = a[i][j] + b[i][j];
-            result_sub[i][j] = a[i][j] - b[i][j];
-            result_mul[i][j] = a[i][j] * b[i][j];
-            result_div[i][j] = b[i][j] != 0 ? a[i][j] / b[i][j] : 0;
+            result[i][j] = a[i][j] + b[i][j];
+        }
+    }
+}
+
+void subOperation(double **a, double **b, double **result, const int SIZE) {
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            result[i][j] = a[i][j] - b[i][j];
+        }
+    }
+}
+
+void mulOperation(double **a, double **b, double **result, const int SIZE) {
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            result[i][j] = a[i][j] * b[i][j];
+        }
+    }
+}
+
+void divOperation(double **a, double **b, double **result, const int SIZE) {
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            result[i][j] = b[i][j] != 0 ? a[i][j] / b[i][j] : 0;
         }
     }
 }
@@ -20,7 +40,7 @@ int main(int argc, char *argv[]) {
     const int SIZE = atoi(argv[1]);
     const int LOOPS = atoi(argv[2]);
 
-    double totalTime = 0.0;
+    double totalTimeAdd = 0.0, totalTimeSub = 0.0, totalTimeMul = 0.0, totalTimeDiv = 0.0;
 
     double **a = malloc(SIZE * sizeof(double *));
     double **b = malloc(SIZE * sizeof(double *));
@@ -44,7 +64,6 @@ int main(int argc, char *argv[]) {
     }
 
     for (int k = 0; k < LOOPS; ++k) {
-        start = omp_get_wtime();
         for (int i = 0; i < SIZE; ++i) {
             for (int j = 0; j < SIZE; ++j) {
                 a[i][j] = i + j + 1;
@@ -52,13 +71,31 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        performOperations(a, b, result_add, result_sub, result_mul, result_div, SIZE);
-        end = omp_get_wtime();
+        startAdd = omp_get_wtime();
+        addOperation(a, b, result_add, SIZE);
+        endAdd = omp_get_wtime();
+        totalTimeAdd += endAdd - startAdd;
 
-        totalTime += end - start;
+        startSub = omp_get_wtime();
+        subOperation(a, b, result_sub, SIZE);
+        endSub = omp_get_wtime();
+        totalTimeSub += endSub - startSub;
+
+        startMul = omp_get_wtime();
+        mulOperation(a, b, result_mul, SIZE);
+        endMul = omp_get_wtime();
+        totalTimeMul += endMul - startMul;
+
+        startDiv = omp_get_wtime();
+        divOperation(a, b, result_div, SIZE);
+        endDiv = omp_get_wtime();
+        totalTimeDiv += endDiv - startDiv;
     }
 
-    printf("Time taken: %f seconds\n", totalTime / (LOOPS* 1.0));
+    printf("Average time for addition: %f seconds\n", totalTimeAdd / LOOPS);
+    printf("Average time for subtraction: %f seconds\n", totalTimeSub / LOOPS);
+    printf("Average time for multiplication: %f seconds\n", totalTimeMul / LOOPS);
+    printf("Average time for division: %f seconds\n", totalTimeDiv / LOOPS);
 
     for (int i = 0; i < SIZE; i++) {
         free(a[i]);

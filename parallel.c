@@ -2,17 +2,41 @@
 #include <stdlib.h>
 #include <omp.h>
 
-double start;
-double end;
+double startAdd, endAdd, startSub, endSub, startMul, endMul, startDiv, endDiv;
 
-void performOperations(double **a, double **b, double **result_add, double **result_sub, double **result_mul, double **result_div, const int SIZE, const int THREADS) {
+
+void addOperation(double **a, double **b, double **result, const int SIZE, const int THREADS) {
     #pragma omp parallel for collapse(2) num_threads(THREADS)
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
-            result_add[i][j] = a[i][j] + b[i][j];
-            result_sub[i][j] = a[i][j] - b[i][j];
-            result_mul[i][j] = a[i][j] * b[i][j];
-            result_div[i][j] = b[i][j] != 0 ? a[i][j] / b[i][j] : 0;
+            result[i][j] = a[i][j] + b[i][j];
+        }
+    }
+}
+
+void subOperation(double **a, double **b, double **result, const int SIZE, const int THREADS) {
+    #pragma omp parallel for collapse(2) num_threads(THREADS)
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            result[i][j] = a[i][j] - b[i][j];
+        }
+    }
+}
+
+void mulOperation(double **a, double **b, double **result, const int SIZE, const int THREADS) {
+    #pragma omp parallel for collapse(2) num_threads(THREADS)
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            result[i][j] = a[i][j] * b[i][j];
+        }
+    }
+}
+
+void divOperation(double **a, double **b, double **result, const int SIZE, const int THREADS) {
+    #pragma omp parallel for collapse(2) num_threads(THREADS)
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            result[i][j] = b[i][j] != 0 ? a[i][j] / b[i][j] : 0;
         }
     }
 }
@@ -22,7 +46,7 @@ int main(int argc, char *argv[]) {
     const int LOOPS = atoi(argv[2]);
     const int THREADS = atoi(argv[3]);
 
-    double totalTime = 0;
+    double totalTimeAdd = 0.0, totalTimeSub = 0.0, totalTimeMul = 0.0, totalTimeDiv = 0.0;
 
     double **a = malloc(SIZE * sizeof(double *));
     double **b = malloc(SIZE * sizeof(double *));
@@ -48,7 +72,6 @@ int main(int argc, char *argv[]) {
     omp_set_num_threads(THREADS);
 
     for (int k = 0; k < LOOPS; ++k) {
-        start = omp_get_wtime();
         #pragma omp parallel for collapse(2) num_threads(THREADS)
         for (int i = 0; i < SIZE; ++i) {
             for (int j = 0; j < SIZE; ++j) {
@@ -57,13 +80,47 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        performOperations(a, b, result_add, result_sub, result_mul, result_div, SIZE, THREADS);
-        end = omp_get_wtime();
-
-        totalTime += end - start;
+        #pragma omp parallel sections
+        {
+            #pragma omp section
+            {
+                startAdd = omp_get_wtime();
+                addOperation(a, b, result_add, SIZE, THREADS);
+                endAdd = omp_get_wtime();
+                #pragma omp critical
+                totalTimeAdd += endAdd - startAdd;
+            }
+            #pragma omp section
+            {
+                startSub = omp_get_wtime();
+                subOperation(a, b, result_sub, SIZE, THREADS);
+                endSub = omp_get_wtime();
+                #pragma omp critical
+                totalTimeSub += endSub - startSub;
+            }
+            #pragma omp section
+            {
+                startMul = omp_get_wtime();
+                mulOperation(a, b, result_mul, SIZE, THREADS);
+                endMul = omp_get_wtime();
+                #pragma omp critical
+                totalTimeMul += endMul - startMul;
+            }
+            #pragma omp section
+            {
+                startDiv = omp_get_wtime();
+                divOperation(a, b, result_div, SIZE, THREADS);
+                endDiv = omp_get_wtime();
+                #pragma omp critical
+                totalTimeDiv += endDiv - startDiv;
+            }
+        }
     }
 
-    printf("Time taken: %f seconds\n", totalTime / (LOOPS * 1.0));
+    printf("Average time for addition: %f seconds\n", totalTimeAdd / LOOPS);
+    printf("Average time for subtraction: %f seconds\n", totalTimeSub / LOOPS);
+    printf("Average time for multiplication: %f seconds\n", totalTimeMul / LOOPS);
+    printf("Average time for division: %f seconds\n", totalTimeDiv / LOOPS);
 
     for (int i = 0; i < SIZE; i++) {
         free(a[i]);
